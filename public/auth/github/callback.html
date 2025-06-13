@@ -79,7 +79,9 @@
                             type: 'GITHUB_AUTH_ERROR',
                             error: errorMsg
                         }, window.location.origin);
-                        window.close();
+                        setTimeout(() => {
+                            window.close();
+                        }, 100);
                     } else {
                         // This is a direct redirect
                         showError(`Authentication failed: ${errorMsg}`);
@@ -99,7 +101,9 @@
                             type: 'GITHUB_AUTH_ERROR',
                             error: errorMsg
                         }, window.location.origin);
-                        window.close();
+                        setTimeout(() => {
+                            window.close();
+                        }, 100);
                     } else {
                         showError(errorMsg);
                         setTimeout(() => {
@@ -121,8 +125,10 @@
                         state: state
                     }, window.location.origin);
                     
-                    // Close the popup
-                    window.close();
+                    // Close the popup with a small delay to ensure message is processed
+                    setTimeout(() => {
+                        window.close();
+                    }, 100);
                 } else {
                     // This is a direct redirect - handle auth directly
                     console.log('Handling direct redirect authentication');
@@ -137,7 +143,9 @@
                         type: 'GITHUB_AUTH_ERROR',
                         error: errorMsg
                     }, window.location.origin);
-                    window.close();
+                    setTimeout(() => {
+                        window.close();
+                    }, 100);
                 } else {
                     showError(errorMsg);
                     setTimeout(() => {
