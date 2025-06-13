@@ -1,7 +1,7 @@
 import React from 'react'
 import { motion } from 'framer-motion'
-import { ExternalLink, Github, Star, Code, Zap, CheckCircle, ArrowRight } from 'lucide-react'
-import { useGitHub } from '../hooks/useGitHub'
+import { ExternalLink, Star, Code, Zap, CheckCircle, Wallet, Coins } from 'lucide-react'
+import { useWallet } from '@aptos-labs/wallet-adapter-react'
 import toast from 'react-hot-toast'
 
 interface Project {
@@ -19,39 +19,40 @@ interface ProjectCardProps {
 }
 
 const ProjectCard: React.FC<ProjectCardProps> = ({ project }) => {
-  const { isAuthenticated, createRepository, login } = useGitHub()
+  const { connected, connect } = useWallet()
 
-  const handleCreateRepo = async () => {
+  const handleCreateProject = async () => {
     try {
-      if (!isAuthenticated) {
-        toast.error('Please connect your GitHub account first')
+      if (!connected) {
+        toast.error('Please connect your Aptos wallet first')
         try {
-          await login()
-          // After successful login, try creating the repo again
-          await createRepository({
-            name: project.title,
-            description: project.description,
-            techStack: project.techStack,
-            learningGoals: project.learningGoals
-          })
-          toast.success('🎉 GitHub repository created successfully!')
+          await connect('Petra' as any)
+          toast.success('🎉 Wallet connected! You can now create projects on Aptos!')
         } catch (error) {
-          toast.error('Failed to connect to GitHub')
+          toast.error('Failed to connect wallet')
         }
         return
       }
 
-      await createRepository({
-        name: project.title,
-        description: project.description,
-        techStack: project.techStack,
-        learningGoals: project.learningGoals
-      })
+      // Simulate project creation on Aptos blockchain
+      toast.loading('Creating project on Aptos blockchain...', { duration: 2000 })
       
-      toast.success('🎉 GitHub repository created successfully!')
+      setTimeout(() => {
+        toast.success('🎉 Project created on Aptos blockchain successfully!')
+      }, 2000)
+      
     } catch (error) {
-      toast.error('Failed to create repository. Please try again.')
+      toast.error('Failed to create project. Please try again.')
     }
+  }
+
+  const handleFundProject = async () => {
+    if (!connected) {
+      toast.error('Please connect your Aptos wallet first')
+      return
+    }
+    
+    toast.success('💰 Project funding feature coming soon!')
   }
 
   return (
@@ -122,15 +123,18 @@ const ProjectCard: React.FC<ProjectCardProps> = ({ project }) => {
 
       <div className="flex space-x-3 mb-6">
         <button
-          onClick={handleCreateRepo}
+          onClick={handleCreateProject}
           className="flex-1 btn-primary flex items-center justify-center space-x-2"
         >
-          <Github className="h-4 w-4" />
-          <span>{isAuthenticated ? 'Create Repo' : 'Connect & Create'}</span>
+          <Wallet className="h-4 w-4" />
+          <span>{connected ? 'Create on Aptos' : 'Connect & Create'}</span>
         </button>
-        <button className="btn-secondary flex items-center space-x-2">
-          <ExternalLink className="h-4 w-4" />
-          <span>Guide</span>
+        <button 
+          onClick={handleFundProject}
+          className="btn-secondary flex items-center space-x-2"
+        >
+          <Coins className="h-4 w-4" />
+          <span>Fund</span>
         </button>
       </div>
 
@@ -139,10 +143,10 @@ const ProjectCard: React.FC<ProjectCardProps> = ({ project }) => {
           <div className="text-2xl">💡</div>
           <div>
             <p className="text-sm text-success-800 font-medium mb-1">
-              Motivational Boost
+              Blockchain-Powered Learning
             </p>
             <p className="text-sm text-success-700">
-              "Every line of code you write is a step toward your future—let's go!"
+              "Build on Aptos and showcase your Web3 skills to future employers!"
             </p>
           </div>
         </div>

@@ -1,8 +1,8 @@
 import React from 'react'
 import { Link, useLocation } from 'react-router-dom'
 import { motion } from 'framer-motion'
-import { Code2, Home, Zap, BarChart3, Github, Bell, Search } from 'lucide-react'
-import GitHubAuthButton from './GitHubAuthButton'
+import { Code2, Home, Zap, BarChart3, Bell, Search, Wallet } from 'lucide-react'
+import AptosWalletButton from './AptosWalletButton'
 
 const Header = () => {
   const location = useLocation()
@@ -66,14 +66,15 @@ const Header = () => {
               <span className="absolute -top-1 -right-1 w-3 h-3 bg-secondary-500 rounded-full"></span>
             </button>
             <a
-              href="https://github.com"
+              href="https://aptoslabs.com"
               target="_blank"
               rel="noopener noreferrer"
               className="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-2xl transition-all duration-200"
+              title="Aptos Labs"
             >
-              <Github className="h-5 w-5" />
+              <Wallet className="h-5 w-5" />
             </a>
-            <GitHubAuthButton />
+            <AptosWalletButton />
           </div>
         </div>
       </div>

@@ -1,39 +1,39 @@
 import React, { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts'
-import { Trophy, Code, GitBranch, Star, TrendingUp, Calendar, Target } from 'lucide-react'
-import GitHubStats from '../components/GitHubStats'
+import { Trophy, Code, Wallet, Star, TrendingUp, Calendar, Target } from 'lucide-react'
+import AptosStats from '../components/AptosStats'
 
 const Dashboard = () => {
   const [careerReadiness, setCareerReadiness] = useState(72)
   const [projects, setProjects] = useState([
-    { id: 1, name: 'Weather Dashboard', status: 'completed', commits: 24, stars: 5 },
-    { id: 2, name: 'Task Manager', status: 'in-progress', commits: 12, stars: 2 },
-    { id: 3, name: 'Portfolio Website', status: 'planned', commits: 0, stars: 0 },
+    { id: 1, name: 'Weather Dashboard', status: 'completed', transactions: 24, aptReward: 5 },
+    { id: 2, name: 'Task Manager', status: 'in-progress', transactions: 12, aptReward: 2 },
+    { id: 3, name: 'Portfolio Website', status: 'planned', transactions: 0, aptReward: 0 },
   ])
 
   const skillsData = [
     { name: 'JavaScript', level: 85, color: '#f7df1e' },
     { name: 'React', level: 78, color: '#61dafb' },
     { name: 'CSS', level: 82, color: '#1572b6' },
-    { name: 'Node.js', level: 65, color: '#339933' },
-    { name: 'Git', level: 75, color: '#f05032' },
+    { name: 'Move (Aptos)', level: 45, color: '#00d4aa' },
+    { name: 'Web3', level: 55, color: '#f05032' },
   ]
 
   const activityData = [
-    { month: 'Jan', commits: 45, projects: 2 },
-    { month: 'Feb', commits: 52, projects: 1 },
-    { month: 'Mar', commits: 38, projects: 3 },
-    { month: 'Apr', commits: 67, projects: 2 },
-    { month: 'May', commits: 71, projects: 1 },
-    { month: 'Jun', commits: 89, projects: 2 },
+    { month: 'Jan', projects: 2, aptEarned: 15 },
+    { month: 'Feb', projects: 1, aptEarned: 8 },
+    { month: 'Mar', projects: 3, aptEarned: 22 },
+    { month: 'Apr', projects: 2, aptEarned: 18 },
+    { month: 'May', projects: 1, aptEarned: 12 },
+    { month: 'Jun', projects: 2, aptEarned: 25 },
   ]
 
   const readinessFactors = [
     { name: 'Portfolio Quality', value: 85, color: '#0ea5e9' },
     { name: 'Technical Skills', value: 78, color: '#22c55e' },
+    { name: 'Web3 Knowledge', value: 55, color: '#00d4aa' },
     { name: 'Project Diversity', value: 65, color: '#f59e0b' },
-    { name: 'Code Quality', value: 72, color: '#8b5cf6' },
   ]
 
   return (
@@ -44,8 +44,8 @@ const Dashboard = () => {
           animate={{ opacity: 1, y: 0 }}
           className="mb-8"
         >
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">Your Dashboard</h1>
-          <p className="text-gray-600">Track your progress and career readiness</p>
+          <h1 className="text-3xl font-bold text-gray-900 mb-2">Your Web3 Dashboard</h1>
+          <p className="text-gray-600">Track your progress and career readiness in the decentralized world</p>
         </motion.div>
 
         {/* Career Readiness Score */}
@@ -57,9 +57,9 @@ const Dashboard = () => {
         >
           <div className="flex items-center justify-between">
             <div>
-              <h2 className="text-2xl font-bold mb-2">Career Readiness Score</h2>
+              <h2 className="text-2xl font-bold mb-2">Web3 Career Readiness Score</h2>
               <p className="text-white/90 mb-4">
-                Based on your portfolio, skills, and project activity
+                Based on your portfolio, blockchain skills, and Aptos projects
               </p>
               <div className="flex items-center space-x-4">
                 <div className="text-4xl font-bold">{careerReadiness}%</div>
@@ -76,14 +76,14 @@ const Dashboard = () => {
         </motion.div>
 
         <div className="grid lg:grid-cols-3 gap-8 mb-8">
-          {/* GitHub Stats */}
+          {/* Aptos Wallet Stats */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.2 }}
             className="lg:col-span-1"
           >
-            <GitHubStats />
+            <AptosStats />
           </motion.div>
 
           {/* Activity Chart */}
@@ -93,15 +93,15 @@ const Dashboard = () => {
             transition={{ delay: 0.3 }}
             className="lg:col-span-2 card"
           >
-            <h3 className="text-lg font-semibold text-gray-900 mb-6">Activity Overview</h3>
+            <h3 className="text-lg font-semibold text-gray-900 mb-6">Web3 Activity Overview</h3>
             <ResponsiveContainer width="100%" height={300}>
               <BarChart data={activityData}>
                 <CartesianGrid strokeDasharray="3 3" />
                 <XAxis dataKey="month" />
                 <YAxis />
                 <Tooltip />
-                <Bar dataKey="commits" fill="#0ea5e9" name="Commits" />
-                <Bar dataKey="projects" fill="#22c55e" name="Projects" />
+                <Bar dataKey="projects" fill="#0ea5e9" name="Projects" />
+                <Bar dataKey="aptEarned" fill="#00d4aa" name="APT Earned" />
               </BarChart>
             </ResponsiveContainer>
           </motion.div>
@@ -184,7 +184,7 @@ const Dashboard = () => {
           transition={{ delay: 0.6 }}
           className="card mt-8"
         >
-          <h3 className="text-lg font-semibold text-gray-900 mb-6">Recent Projects</h3>
+          <h3 className="text-lg font-semibold text-gray-900 mb-6">Recent Aptos Projects</h3>
           <div className="space-y-4">
             {projects.map((project) => (
               <div key={project.id} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
@@ -200,12 +200,12 @@ const Dashboard = () => {
                 </div>
                 <div className="flex items-center space-x-4 text-sm text-gray-500">
                   <div className="flex items-center space-x-1">
-                    <GitBranch className="h-4 w-4" />
-                    <span>{project.commits}</span>
+                    <Wallet className="h-4 w-4" />
+                    <span>{project.transactions}</span>
                   </div>
-                  <div className="flex items-center space-x-1">
+                  <div className="flex items-center space-x-1 text-green-600">
                     <Star className="h-4 w-4" />
-                    <span>{project.stars}</span>
+                    <span>{project.aptReward} APT</span>
                   </div>
                 </div>
               </div>
