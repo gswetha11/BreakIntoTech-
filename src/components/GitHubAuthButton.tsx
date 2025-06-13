@@ -13,6 +13,7 @@ const GitHubAuthButton = () => {
       toast.success('Logged out from GitHub')
     } else {
       try {
+        console.log('Starting GitHub authentication...')
         await login()
         toast.success('🎉 Successfully connected to GitHub!')
       } catch (error: any) {
@@ -22,24 +23,13 @@ const GitHubAuthButton = () => {
           toast.error('Please allow popups and try again')
         } else if (error.message.includes('cancelled')) {
           toast.error('GitHub authentication was cancelled')
+        } else if (error.message.includes('timeout')) {
+          toast.error('Authentication timed out. Please try again.')
         } else {
           toast.error('Failed to connect to GitHub. Please try again.')
         }
       }
     }
-  }
-
-  // Check if GitHub credentials are configured
-  const isConfigured = import.meta.env.VITE_GITHUB_CLIENT_ID && 
-                      import.meta.env.VITE_GITHUB_CLIENT_ID !== 'your_github_client_id_here'
-
-  if (!isConfigured) {
-    return (
-      <div className="flex items-center space-x-2 bg-yellow-50 border border-yellow-200 rounded-2xl px-3 py-2">
-        <AlertCircle className="h-4 w-4 text-yellow-600" />
-        <span className="text-sm text-yellow-700">GitHub not configured</span>
-      </div>
-    )
   }
 
   if (isAuthenticated && user) {
@@ -71,8 +61,8 @@ const GitHubAuthButton = () => {
       onClick={handleAuth}
       disabled={isLoading}
       className="btn-primary flex items-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed"
-      whileHover={{ scale: 1.05 }}
-      whileTap={{ scale: 0.95 }}
+      whileHover={{ scale: isLoading ? 1 : 1.05 }}
+      whileTap={{ scale: isLoading ? 1 : 0.95 }}
     >
       {isLoading ? (
         <>
