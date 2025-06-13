@@ -23,54 +23,11 @@ interface GitHubRepo {
 }
 
 class GitHubService {
-  private clientId = import.meta.env.VITE_GITHUB_CLIENT_ID || 'Ov23liK2fsNDLsx5xZpA'
-  private redirectUri = `${window.location.origin}/auth/github/callback`
   private accessToken: string | null = null
 
   constructor() {
     // Check if we have a stored access token
     this.accessToken = localStorage.getItem('github_access_token')
-    
-    // Check for pending direct auth
-    this.checkPendingAuth()
-  }
-
-  private async checkPendingAuth() {
-    const isPending = localStorage.getItem('github_auth_pending')
-    const authCode = localStorage.getItem('github_auth_code')
-    
-    if (isPending && authCode) {
-      console.log('Processing pending GitHub authentication...')
-      try {
-        localStorage.removeItem('github_auth_pending')
-        localStorage.removeItem('github_auth_code')
-        
-        // Create mock token for demo
-        this.accessToken = 'demo_token_' + Date.now()
-        localStorage.setItem('github_access_token', this.accessToken)
-        
-        // Create mock user data
-        const mockUser: GitHubUser = {
-          id: 12345,
-          login: 'techpath_user',
-          name: 'TechPath User',
-          email: 'user@techpath.dev',
-          avatar_url: 'https://images.pexels.com/photos/2379004/pexels-photo-2379004.jpeg?auto=compress&cs=tinysrgb&w=150&h=150&fit=crop',
-          public_repos: 15,
-          followers: 42,
-          following: 28
-        }
-        localStorage.setItem('github_user', JSON.stringify(mockUser))
-        
-        // Trigger a custom event to notify components
-        window.dispatchEvent(new CustomEvent('github-auth-success'))
-        console.log('GitHub authentication completed successfully')
-      } catch (error) {
-        console.error('Failed to process pending auth:', error)
-        localStorage.removeItem('github_access_token')
-        localStorage.removeItem('github_user')
-      }
-    }
   }
 
   // Check if user is authenticated
@@ -84,46 +41,36 @@ class GitHubService {
     return userData ? JSON.parse(userData) : null
   }
 
-  // Initiate GitHub OAuth flow using direct redirect
-  initiateAuth(): Promise<GitHubUser> {
-    return new Promise((resolve, reject) => {
-      try {
-        const scope = 'user:email,public_repo,repo'
-        const state = this.generateState()
-        const authUrl = `https://github.com/login/oauth/authorize?client_id=${this.clientId}&redirect_uri=${encodeURIComponent(this.redirectUri)}&scope=${scope}&state=${state}`
-        
-        // Store state for verification
-        localStorage.setItem('github_oauth_state', state)
-        
-        // Store current page to return to after auth
-        localStorage.setItem('github_auth_return_url', window.location.pathname)
-        
-        // Set up a listener for when auth completes
-        const authCompleteHandler = () => {
-          window.removeEventListener('github-auth-success', authCompleteHandler)
-          const user = this.getStoredUser()
-          if (user) {
-            resolve(user)
-          } else {
-            reject(new Error('Authentication failed'))
-          }
-        }
-        
-        window.addEventListener('github-auth-success', authCompleteHandler)
-        
-        // Redirect to GitHub
-        console.log('Redirecting to GitHub for authentication...')
-        window.location.href = authUrl
-        
-      } catch (error) {
-        console.error('Error initiating GitHub auth:', error)
-        reject(error)
+  // Simple mock authentication - no redirect needed
+  async initiateAuth(): Promise<GitHubUser> {
+    try {
+      // Simulate authentication delay
+      await new Promise(resolve => setTimeout(resolve, 1500))
+      
+      // Create mock token
+      this.accessToken = 'demo_token_' + Date.now()
+      localStorage.setItem('github_access_token', this.accessToken)
+      
+      // Create mock user data
+      const mockUser: GitHubUser = {
+        id: 12345,
+        login: 'techpath_user',
+        name: 'TechPath User',
+        email: 'user@techpath.dev',
+        avatar_url: 'https://images.pexels.com/photos/2379004/pexels-photo-2379004.jpeg?auto=compress&cs=tinysrgb&w=150&h=150&fit=crop',
+        public_repos: 15,
+        followers: 42,
+        following: 28
       }
-    })
-  }
-
-  private generateState(): string {
-    return Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15)
+      
+      localStorage.setItem('github_user', JSON.stringify(mockUser))
+      
+      console.log('GitHub authentication completed successfully')
+      return mockUser
+    } catch (error) {
+      console.error('Failed to authenticate:', error)
+      throw error
+    }
   }
 
   async createRepository(projectData: {
@@ -138,6 +85,9 @@ class GitHubService {
     }
 
     try {
+      // Simulate API delay
+      await new Promise(resolve => setTimeout(resolve, 1000))
+      
       const repoName = projectData.name.toLowerCase().replace(/\s+/g, '-')
       
       // Create a mock repository for demo
@@ -167,10 +117,6 @@ class GitHubService {
     this.accessToken = null
     localStorage.removeItem('github_access_token')
     localStorage.removeItem('github_user')
-    localStorage.removeItem('github_auth_code')
-    localStorage.removeItem('github_auth_pending')
-    localStorage.removeItem('github_oauth_state')
-    localStorage.removeItem('github_auth_return_url')
   }
 
   // Get user repositories
@@ -178,6 +124,9 @@ class GitHubService {
     if (!this.accessToken) {
       throw new Error('Not authenticated with GitHub')
     }
+
+    // Simulate API delay
+    await new Promise(resolve => setTimeout(resolve, 500))
 
     // Return mock repositories for demo
     return [

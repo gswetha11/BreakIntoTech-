@@ -14,9 +14,7 @@ const GitHubAuthButton = () => {
     } else {
       try {
         console.log('Starting GitHub authentication...')
-        // The login function will handle the redirect
         await login()
-        // This won't execute because of the redirect, but kept for completeness
         toast.success('🎉 Successfully connected to GitHub!')
       } catch (error: any) {
         console.error('GitHub auth error:', error)

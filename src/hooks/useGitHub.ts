@@ -19,32 +19,10 @@ export const useGitHub = () => {
 
   useEffect(() => {
     // Check if user is already authenticated
-    const checkAuthStatus = () => {
-      const storedUser = githubService.getStoredUser()
-      if (storedUser && githubService.isAuthenticated()) {
-        setUser(storedUser)
-        setIsAuthenticated(true)
-      }
-    }
-
-    // Initial check
-    checkAuthStatus()
-
-    // Listen for auth success events
-    const handleAuthSuccess = () => {
-      console.log('GitHub auth success event received')
-      checkAuthStatus()
-    }
-
-    window.addEventListener('github-auth-success', handleAuthSuccess)
-
-    // Also check periodically in case the event was missed
-    const interval = setInterval(checkAuthStatus, 1000)
-
-    // Cleanup
-    return () => {
-      window.removeEventListener('github-auth-success', handleAuthSuccess)
-      clearInterval(interval)
+    const storedUser = githubService.getStoredUser()
+    if (storedUser && githubService.isAuthenticated()) {
+      setUser(storedUser)
+      setIsAuthenticated(true)
     }
   }, [])
 
