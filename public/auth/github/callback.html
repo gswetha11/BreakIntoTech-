@@ -81,7 +81,7 @@
                         }, window.location.origin);
                         setTimeout(() => {
                             window.close();
-                        }, 100);
+                        }, 500);
                     } else {
                         // This is a direct redirect
                         showError(`Authentication failed: ${errorMsg}`);
@@ -103,7 +103,7 @@
                         }, window.location.origin);
                         setTimeout(() => {
                             window.close();
-                        }, 100);
+                        }, 500);
                     } else {
                         showError(errorMsg);
                         setTimeout(() => {
@@ -125,10 +125,10 @@
                         state: state
                     }, window.location.origin);
                     
-                    // Close the popup with a small delay to ensure message is processed
+                    // Close the popup with a longer delay to ensure message is processed
                     setTimeout(() => {
                         window.close();
-                    }, 100);
+                    }, 500);
                 } else {
                     // This is a direct redirect - handle auth directly
                     console.log('Handling direct redirect authentication');
@@ -145,7 +145,7 @@
                     }, window.location.origin);
                     setTimeout(() => {
                         window.close();
-                    }, 100);
+                    }, 500);
                 } else {
                     showError(errorMsg);
                     setTimeout(() => {
