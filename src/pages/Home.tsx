@@ -1,7 +1,7 @@
 import React from 'react'
 import { Link } from 'react-router-dom'
 import { motion } from 'framer-motion'
-import { ArrowRight, Star, Users, Trophy, Code, Rocket, Heart, Sparkles, BookOpen, Target, Zap } from 'lucide-react'
+import { ArrowRight, Star, Users, Trophy, Code, Rocket, Heart, Sparkles, BookOpen, Target, Zap, BarChart3 } from 'lucide-react'
 
 const Home = () => {
   const features = [
