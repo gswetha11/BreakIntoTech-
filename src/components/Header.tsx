@@ -2,6 +2,7 @@ import React from 'react'
 import { Link, useLocation } from 'react-router-dom'
 import { motion } from 'framer-motion'
 import { Code2, Home, Zap, BarChart3, Github, Bell, Search } from 'lucide-react'
+import GitHubAuthButton from './GitHubAuthButton'
 
 const Header = () => {
   const location = useLocation()
@@ -72,9 +73,7 @@ const Header = () => {
             >
               <Github className="h-5 w-5" />
             </a>
-            <button className="btn-primary">
-              Connect GitHub
-            </button>
+            <GitHubAuthButton />
           </div>
         </div>
       </div>

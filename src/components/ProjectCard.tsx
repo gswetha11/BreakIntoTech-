@@ -1,6 +1,7 @@
 import React from 'react'
 import { motion } from 'framer-motion'
 import { ExternalLink, Github, Star, Code, Zap, CheckCircle, ArrowRight } from 'lucide-react'
+import { useGitHub } from '../hooks/useGitHub'
 import toast from 'react-hot-toast'
 
 interface Project {
@@ -18,9 +19,35 @@ interface ProjectCardProps {
 }
 
 const ProjectCard: React.FC<ProjectCardProps> = ({ project }) => {
+  const { isAuthenticated, createRepository, login } = useGitHub()
+
   const handleCreateRepo = async () => {
     try {
-      // In a real app, this would call the GitHub API
+      if (!isAuthenticated) {
+        toast.error('Please connect your GitHub account first')
+        try {
+          await login()
+          // After successful login, try creating the repo again
+          await createRepository({
+            name: project.title,
+            description: project.description,
+            techStack: project.techStack,
+            learningGoals: project.learningGoals
+          })
+          toast.success('🎉 GitHub repository created successfully!')
+        } catch (error) {
+          toast.error('Failed to connect to GitHub')
+        }
+        return
+      }
+
+      await createRepository({
+        name: project.title,
+        description: project.description,
+        techStack: project.techStack,
+        learningGoals: project.learningGoals
+      })
+      
       toast.success('🎉 GitHub repository created successfully!')
     } catch (error) {
       toast.error('Failed to create repository. Please try again.')
@@ -99,7 +126,7 @@ const ProjectCard: React.FC<ProjectCardProps> = ({ project }) => {
           className="flex-1 btn-primary flex items-center justify-center space-x-2"
         >
           <Github className="h-4 w-4" />
-          <span>Create Repo</span>
+          <span>{isAuthenticated ? 'Create Repo' : 'Connect & Create'}</span>
         </button>
         <button className="btn-secondary flex items-center space-x-2">
           <ExternalLink className="h-4 w-4" />

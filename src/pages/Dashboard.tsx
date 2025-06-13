@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react'
 import { motion } from 'framer-motion'
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts'
 import { Trophy, Code, GitBranch, Star, TrendingUp, Calendar, Target } from 'lucide-react'
+import GitHubStats from '../components/GitHubStats'
 
 const Dashboard = () => {
   const [careerReadiness, setCareerReadiness] = useState(72)
@@ -75,60 +76,14 @@ const Dashboard = () => {
         </motion.div>
 
         <div className="grid lg:grid-cols-3 gap-8 mb-8">
-          {/* Quick Stats */}
+          {/* GitHub Stats */}
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.2 }}
-            className="lg:col-span-1 space-y-6"
+            className="lg:col-span-1"
           >
-            <div className="card">
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="text-lg font-semibold text-gray-900">Quick Stats</h3>
-                <Calendar className="h-5 w-5 text-gray-400" />
-              </div>
-              <div className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center space-x-2">
-                    <Code className="h-4 w-4 text-primary-500" />
-                    <span className="text-gray-600">Active Projects</span>
-                  </div>
-                  <span className="font-semibold text-gray-900">3</span>
-                </div>
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center space-x-2">
-                    <GitBranch className="h-4 w-4 text-green-500" />
-                    <span className="text-gray-600">Total Commits</span>
-                  </div>
-                  <span className="font-semibold text-gray-900">156</span>
-                </div>
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center space-x-2">
-                    <Star className="h-4 w-4 text-yellow-500" />
-                    <span className="text-gray-600">GitHub Stars</span>
-                  </div>
-                  <span className="font-semibold text-gray-900">12</span>
-                </div>
-              </div>
-            </div>
-
-            <div className="card">
-              <h3 className="text-lg font-semibold text-gray-900 mb-4">Next Milestones</h3>
-              <div className="space-y-3">
-                <div className="flex items-center space-x-3">
-                  <div className="w-2 h-2 bg-primary-500 rounded-full"></div>
-                  <span className="text-sm text-gray-600">Complete Task Manager project</span>
-                </div>
-                <div className="flex items-center space-x-3">
-                  <div className="w-2 h-2 bg-yellow-500 rounded-full"></div>
-                  <span className="text-sm text-gray-600">Add 3 more projects to portfolio</span>
-                </div>
-                <div className="flex items-center space-x-3">
-                  <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                  <span className="text-sm text-gray-600">Reach 80% readiness score</span>
-                </div>
-              </div>
-            </div>
+            <GitHubStats />
           </motion.div>
 
           {/* Activity Chart */}
