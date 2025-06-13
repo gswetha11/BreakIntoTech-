@@ -106,7 +106,7 @@ class GitHubService {
             reject(new Error('Authentication was cancelled'))
           }
         }
-      }, 1000)
+      }, 2000) // Increased from 1000ms to 2000ms to prevent race condition
 
       // Listen for messages from the popup
       const messageHandler = (event: MessageEvent) => {
