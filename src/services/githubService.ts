@@ -31,6 +31,32 @@ class GitHubService {
   constructor() {
     // Check if we have a stored access token
     this.accessToken = localStorage.getItem('github_access_token')
+    
+    // Check for pending direct auth
+    this.checkPendingAuth()
+  }
+
+  private async checkPendingAuth() {
+    const isPending = localStorage.getItem('github_auth_pending')
+    const authCode = localStorage.getItem('github_auth_code')
+    
+    if (isPending && authCode) {
+      console.log('Processing pending GitHub authentication...')
+      try {
+        localStorage.removeItem('github_auth_pending')
+        localStorage.removeItem('github_auth_code')
+        
+        await this.exchangeCodeForToken(authCode)
+        await this.fetchUserData()
+        
+        // Trigger a custom event to notify components
+        window.dispatchEvent(new CustomEvent('github-auth-success'))
+      } catch (error) {
+        console.error('Failed to process pending auth:', error)
+        localStorage.removeItem('github_access_token')
+        localStorage.removeItem('github_user')
+      }
+    }
   }
 
   // Check if user is authenticated
@@ -54,7 +80,7 @@ class GitHubService {
       // Store state for verification
       localStorage.setItem('github_oauth_state', state)
       
-      // Open GitHub auth in a popup
+      // Try popup first
       const popup = window.open(
         authUrl,
         'github-auth',
@@ -387,6 +413,10 @@ Built with ❤️ using TechPath
     this.accessToken = null
     localStorage.removeItem('github_access_token')
     localStorage.removeItem('github_user')
+    localStorage.removeItem('github_auth_code')
+    localStorage.removeItem('github_auth_pending')
+    localStorage.removeItem('github_oauth_state')
+    localStorage.removeItem('github_auth_return_url')
   }
 
   // Get user repositories

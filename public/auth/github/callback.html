@@ -10,18 +10,17 @@
             display: flex;
             justify-content: center;
             align-items: center;
-            height: 100vh;
+            min-height: 100vh;
             margin: 0;
-            background: linear-gradient(135deg, #8b5cf6 0%, #ec4899 50%, #06b6d4 100%);
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: white;
         }
         .container {
             text-align: center;
             padding: 2rem;
             background: rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
             backdrop-filter: blur(10px);
-            border-radius: 1rem;
-            border: 1px solid rgba(255, 255, 255, 0.2);
         }
         .spinner {
             width: 40px;
@@ -40,7 +39,7 @@
             color: #ff6b6b;
             background: rgba(255, 107, 107, 0.1);
             padding: 1rem;
-            border-radius: 0.5rem;
+            border-radius: 8px;
             margin-top: 1rem;
         }
     </style>
@@ -48,15 +47,21 @@
 <body>
     <div class="container">
         <div class="spinner"></div>
-        <h2>Connecting to GitHub...</h2>
-        <p>Please wait while we complete the authentication process.</p>
+        <h2>Completing GitHub Authentication...</h2>
+        <p>Please wait while we complete your login.</p>
         <div id="error" class="error" style="display: none;"></div>
     </div>
 
     <script>
-        (function() {
+        function showError(message) {
+            const errorDiv = document.getElementById('error');
+            errorDiv.textContent = message;
+            errorDiv.style.display = 'block';
+            document.querySelector('.spinner').style.display = 'none';
+        }
+
+        function handleAuth() {
             try {
-                // Get URL parameters
                 const urlParams = new URLSearchParams(window.location.search);
                 const code = urlParams.get('code');
                 const state = urlParams.get('state');
@@ -64,58 +69,118 @@
                 const errorDescription = urlParams.get('error_description');
 
                 if (error) {
-                    // Handle OAuth error
-                    const errorDiv = document.getElementById('error');
-                    errorDiv.style.display = 'block';
-                    errorDiv.textContent = `Authentication failed: ${errorDescription || error}`;
+                    const errorMsg = errorDescription || error;
+                    console.error('GitHub OAuth error:', errorMsg);
                     
-                    // Send error to parent window
-                    if (window.opener) {
+                    // Check if this is a popup or direct redirect
+                    if (window.opener && !window.opener.closed) {
+                        // This is a popup
                         window.opener.postMessage({
                             type: 'GITHUB_AUTH_ERROR',
-                            error: errorDescription || error
+                            error: errorMsg
                         }, window.location.origin);
-                    }
-                    
-                    setTimeout(() => {
                         window.close();
-                    }, 3000);
+                    } else {
+                        // This is a direct redirect
+                        showError(`Authentication failed: ${errorMsg}`);
+                        setTimeout(() => {
+                            window.location.href = '/';
+                        }, 3000);
+                    }
                     return;
                 }
 
-                if (code && state) {
-                    // Send success message to parent window
-                    if (window.opener) {
+                if (!code) {
+                    const errorMsg = 'No authorization code received';
+                    console.error(errorMsg);
+                    
+                    if (window.opener && !window.opener.closed) {
                         window.opener.postMessage({
-                            type: 'GITHUB_AUTH_SUCCESS',
-                            code: code,
-                            state: state
+                            type: 'GITHUB_AUTH_ERROR',
+                            error: errorMsg
                         }, window.location.origin);
+                        window.close();
+                    } else {
+                        showError(errorMsg);
+                        setTimeout(() => {
+                            window.location.href = '/';
+                        }, 3000);
                     }
+                    return;
+                }
+
+                console.log('GitHub auth callback received:', { code: code.substring(0, 10) + '...', state });
+
+                // Check if this is a popup or direct redirect
+                if (window.opener && !window.opener.closed) {
+                    // This is a popup - send message to parent
+                    console.log('Sending auth success message to parent window');
+                    window.opener.postMessage({
+                        type: 'GITHUB_AUTH_SUCCESS',
+                        code: code,
+                        state: state
+                    }, window.location.origin);
                     
                     // Close the popup
                     window.close();
                 } else {
-                    throw new Error('Missing required parameters');
+                    // This is a direct redirect - handle auth directly
+                    console.log('Handling direct redirect authentication');
+                    handleDirectAuth(code, state);
                 }
-            } catch (err) {
-                console.error('GitHub auth callback error:', err);
-                const errorDiv = document.getElementById('error');
-                errorDiv.style.display = 'block';
-                errorDiv.textContent = 'Authentication failed. Please try again.';
+            } catch (error) {
+                console.error('Error in auth callback:', error);
+                const errorMsg = 'Authentication processing failed';
                 
-                if (window.opener) {
+                if (window.opener && !window.opener.closed) {
                     window.opener.postMessage({
                         type: 'GITHUB_AUTH_ERROR',
-                        error: 'Authentication failed'
+                        error: errorMsg
                     }, window.location.origin);
-                }
-                
-                setTimeout(() => {
                     window.close();
+                } else {
+                    showError(errorMsg);
+                    setTimeout(() => {
+                        window.location.href = '/';
+                    }, 3000);
+                }
+            }
+        }
+
+        async function handleDirectAuth(code, state) {
+            try {
+                // Verify state
+                const storedState = localStorage.getItem('github_oauth_state');
+                if (state !== storedState) {
+                    throw new Error('Invalid state parameter');
+                }
+
+                // For direct auth, we'll use a simplified approach
+                // Store the code temporarily and let the main app handle the token exchange
+                localStorage.setItem('github_auth_code', code);
+                localStorage.removeItem('github_oauth_state');
+                
+                // Get return URL or default to home
+                const returnUrl = localStorage.getItem('github_auth_return_url') || '/';
+                localStorage.removeItem('github_auth_return_url');
+                
+                // Add a flag to indicate successful auth
+                localStorage.setItem('github_auth_pending', 'true');
+                
+                // Redirect back to the app
+                window.location.href = returnUrl;
+                
+            } catch (error) {
+                console.error('Direct auth error:', error);
+                showError('Authentication failed. Redirecting...');
+                setTimeout(() => {
+                    window.location.href = '/';
                 }, 3000);
             }
-        })();
+        }
+
+        // Start the authentication process
+        handleAuth();
     </script>
 </body>
 </html>
