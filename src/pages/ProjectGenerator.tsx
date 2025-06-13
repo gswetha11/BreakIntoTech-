@@ -167,7 +167,7 @@ const ProjectGenerator = () => {
                 )}
               </button>
             </form>
-          </div>
+          </motion.div>
 
           {/* Results Section */}
           <motion.div
