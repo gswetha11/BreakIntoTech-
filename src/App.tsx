@@ -9,7 +9,7 @@ import ProjectDetails from './pages/ProjectDetails'
 
 function App() {
   return (
-    <div className="min-h-screen bg-dark-900">
+    <div className="min-h-screen bg-gray-50 bg-pattern">
       <Header />
       <motion.main
         initial={{ opacity: 0 }}
