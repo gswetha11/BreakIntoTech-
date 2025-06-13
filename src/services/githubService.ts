@@ -23,9 +23,10 @@ interface GitHubRepo {
 }
 
 class GitHubService {
-  private clientId = 'your_github_client_id' // In production, this would come from environment variables
+  private clientId = import.meta.env.VITE_GITHUB_CLIENT_ID || 'your_github_client_id'
   private redirectUri = `${window.location.origin}/auth/github/callback`
   private accessToken: string | null = null
+  private proxyUrl = 'https://cors-anywhere.herokuapp.com/' // CORS proxy for development
 
   constructor() {
     // Check if we have a stored access token
@@ -131,36 +132,95 @@ class GitHubService {
   }
 
   private async exchangeCodeForToken(code: string): Promise<void> {
-    // In a real app, this would be a call to your backend
-    // For demo purposes, we'll simulate a successful token exchange
-    const mockToken = 'ghp_' + Math.random().toString(36).substring(2, 40)
-    this.accessToken = mockToken
-    localStorage.setItem('github_access_token', mockToken)
-    localStorage.removeItem('github_oauth_state')
+    try {
+      // Note: In production, this should be done through your backend server
+      // For development, we'll use a CORS proxy
+      const response = await fetch(`${this.proxyUrl}https://github.com/login/oauth/access_token`, {
+        method: 'POST',
+        headers: {
+          'Accept': 'application/json',
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          client_id: this.clientId,
+          client_secret: import.meta.env.VITE_GITHUB_CLIENT_SECRET, // You'll need to provide this
+          code: code,
+        }),
+      })
+
+      if (!response.ok) {
+        throw new Error('Failed to exchange code for token')
+      }
+
+      const data = await response.json()
+      
+      if (data.error) {
+        throw new Error(data.error_description || data.error)
+      }
+
+      this.accessToken = data.access_token
+      localStorage.setItem('github_access_token', this.accessToken!)
+      localStorage.removeItem('github_oauth_state')
+    } catch (error) {
+      console.error('Token exchange error:', error)
+      throw new Error('Failed to authenticate with GitHub')
+    }
   }
 
   async fetchUserData(): Promise<GitHubUser | null> {
     if (!this.accessToken) return null
 
     try {
-      // In a real app, this would make an actual API call
-      // For demo purposes, we'll return mock data
-      const mockUser: GitHubUser = {
-        id: 12345,
-        login: 'techpath_user',
-        name: 'TechPath User',
-        email: 'user@techpath.dev',
-        avatar_url: 'https://images.pexels.com/photos/2379004/pexels-photo-2379004.jpeg?auto=compress&cs=tinysrgb&w=150&h=150&fit=crop',
-        public_repos: 15,
-        followers: 42,
-        following: 28
+      const response = await fetch(`${this.proxyUrl}https://api.github.com/user`, {
+        headers: {
+          'Authorization': `Bearer ${this.accessToken}`,
+          'Accept': 'application/vnd.github.v3+json',
+        },
+      })
+
+      if (!response.ok) {
+        throw new Error('Failed to fetch user data')
       }
 
-      localStorage.setItem('github_user', JSON.stringify(mockUser))
-      return mockUser
+      const userData = await response.json()
+      
+      // Also fetch user email if not public
+      let email = userData.email
+      if (!email) {
+        try {
+          const emailResponse = await fetch(`${this.proxyUrl}https://api.github.com/user/emails`, {
+            headers: {
+              'Authorization': `Bearer ${this.accessToken}`,
+              'Accept': 'application/vnd.github.v3+json',
+            },
+          })
+          
+          if (emailResponse.ok) {
+            const emails = await emailResponse.json()
+            const primaryEmail = emails.find((e: any) => e.primary)
+            email = primaryEmail?.email || emails[0]?.email
+          }
+        } catch (emailError) {
+          console.warn('Could not fetch user email:', emailError)
+        }
+      }
+
+      const user: GitHubUser = {
+        id: userData.id,
+        login: userData.login,
+        name: userData.name || userData.login,
+        email: email || '',
+        avatar_url: userData.avatar_url,
+        public_repos: userData.public_repos,
+        followers: userData.followers,
+        following: userData.following
+      }
+
+      localStorage.setItem('github_user', JSON.stringify(user))
+      return user
     } catch (error) {
       console.error('Error fetching user data:', error)
-      return null
+      throw error
     }
   }
 
@@ -176,41 +236,91 @@ class GitHubService {
     }
 
     try {
-      // In a real app, this would make an actual API call to create the repository
-      // For demo purposes, we'll simulate repository creation
       const repoName = projectData.name.toLowerCase().replace(/\s+/g, '-')
       
-      const mockRepo: GitHubRepo = {
-        id: Math.floor(Math.random() * 1000000),
-        name: repoName,
-        full_name: `techpath_user/${repoName}`,
-        html_url: `https://github.com/techpath_user/${repoName}`,
-        description: projectData.description,
-        private: projectData.private || false,
-        created_at: new Date().toISOString(),
-        updated_at: new Date().toISOString(),
-        stargazers_count: 0,
-        language: projectData.techStack[0] || 'JavaScript'
+      // Create repository
+      const response = await fetch(`${this.proxyUrl}https://api.github.com/user/repos`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${this.accessToken}`,
+          'Accept': 'application/vnd.github.v3+json',
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          name: repoName,
+          description: projectData.description,
+          private: projectData.private || false,
+          auto_init: true,
+        }),
+      })
+
+      if (!response.ok) {
+        const errorData = await response.json()
+        throw new Error(errorData.message || 'Failed to create repository')
       }
 
-      // Simulate creating initial files
-      await this.createInitialFiles(mockRepo, projectData)
+      const repoData = await response.json()
 
-      return mockRepo
+      // Create initial files
+      await this.createInitialFiles(repoData, projectData)
+
+      return {
+        id: repoData.id,
+        name: repoData.name,
+        full_name: repoData.full_name,
+        html_url: repoData.html_url,
+        description: repoData.description,
+        private: repoData.private,
+        created_at: repoData.created_at,
+        updated_at: repoData.updated_at,
+        stargazers_count: repoData.stargazers_count,
+        language: repoData.language
+      }
     } catch (error) {
       console.error('Error creating repository:', error)
       throw error
     }
   }
 
-  private async createInitialFiles(repo: GitHubRepo, projectData: any): Promise<void> {
-    // Simulate creating README.md, .gitignore, and basic project structure
-    const readmeContent = this.generateReadmeContent(projectData)
-    const gitignoreContent = this.generateGitignoreContent(projectData.techStack)
-    
-    // In a real app, these would be actual API calls to create files
-    console.log('Creating README.md:', readmeContent)
-    console.log('Creating .gitignore:', gitignoreContent)
+  private async createInitialFiles(repo: any, projectData: any): Promise<void> {
+    if (!this.accessToken) return
+
+    try {
+      // Create README.md
+      const readmeContent = this.generateReadmeContent(projectData)
+      await this.createFile(repo.full_name, 'README.md', readmeContent, 'Initial README')
+
+      // Create .gitignore
+      const gitignoreContent = this.generateGitignoreContent(projectData.techStack)
+      await this.createFile(repo.full_name, '.gitignore', gitignoreContent, 'Add .gitignore')
+
+      // Create basic project structure based on tech stack
+      if (projectData.techStack.includes('React')) {
+        const packageJson = this.generatePackageJson(projectData)
+        await this.createFile(repo.full_name, 'package.json', packageJson, 'Add package.json')
+      }
+    } catch (error) {
+      console.warn('Could not create initial files:', error)
+    }
+  }
+
+  private async createFile(repoFullName: string, path: string, content: string, message: string): Promise<void> {
+    try {
+      await fetch(`${this.proxyUrl}https://api.github.com/repos/${repoFullName}/contents/${path}`, {
+        method: 'PUT',
+        headers: {
+          'Authorization': `Bearer ${this.accessToken}`,
+          'Accept': 'application/vnd.github.v3+json',
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          message: message,
+          content: btoa(unescape(encodeURIComponent(content))), // Base64 encode
+        }),
+      })
+    } catch (error) {
+      console.warn(`Could not create file ${path}:`, error)
+    }
   }
 
   private generateReadmeContent(projectData: any): string {
@@ -228,13 +338,48 @@ ${projectData.learningGoals.map((goal: string) => `- ${goal}`).join('\n')}
 
 ## 🎯 Stretch Goal
 
-${projectData.stretchGoal}
+${projectData.stretchGoal || 'Add advanced features and optimizations'}
 
 ## 🛠️ Getting Started
 
 1. Clone this repository
+\`\`\`bash
+git clone https://github.com/yourusername/${projectData.name.toLowerCase().replace(/\s+/g, '-')}.git
+\`\`\`
+
 2. Install dependencies
-3. Start building!
+\`\`\`bash
+npm install
+\`\`\`
+
+3. Start development server
+\`\`\`bash
+npm run dev
+\`\`\`
+
+## 📝 Project Structure
+
+\`\`\`
+├── src/
+│   ├── components/
+│   ├── pages/
+│   ├── hooks/
+│   └── utils/
+├── public/
+└── README.md
+\`\`\`
+
+## 🤝 Contributing
+
+1. Fork the repository
+2. Create your feature branch (\`git checkout -b feature/amazing-feature\`)
+3. Commit your changes (\`git commit -m 'Add some amazing feature'\`)
+4. Push to the branch (\`git push origin feature/amazing-feature\`)
+5. Open a Pull Request
+
+## 📄 License
+
+This project is licensed under the MIT License.
 
 ---
 
@@ -248,6 +393,7 @@ node_modules/
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+pnpm-debug.log*
 
 # Environment variables
 .env
@@ -259,6 +405,7 @@ yarn-error.log*
 # Build outputs
 dist/
 build/
+out/
 
 # IDE
 .vscode/
@@ -269,13 +416,18 @@ build/
 # OS
 .DS_Store
 Thumbs.db
+
+# Logs
+logs
+*.log
 `
 
     if (techStack.includes('React') || techStack.includes('Next.js')) {
       gitignore += `
-# React
+# React/Next.js
 .next/
 out/
+.vercel/
 `
     }
 
@@ -289,10 +441,50 @@ __pycache__/
 .Python
 env/
 venv/
+.venv/
+pip-log.txt
+pip-delete-this-directory.txt
+`
+    }
+
+    if (techStack.includes('TypeScript')) {
+      gitignore += `
+# TypeScript
+*.tsbuildinfo
 `
     }
 
     return gitignore
+  }
+
+  private generatePackageJson(projectData: any): string {
+    const packageName = projectData.name.toLowerCase().replace(/\s+/g, '-')
+    
+    return JSON.stringify({
+      name: packageName,
+      version: "1.0.0",
+      description: projectData.description,
+      main: "index.js",
+      scripts: {
+        dev: "vite",
+        build: "vite build",
+        preview: "vite preview"
+      },
+      dependencies: {
+        react: "^18.2.0",
+        "react-dom": "^18.2.0"
+      },
+      devDependencies: {
+        "@types/react": "^18.2.0",
+        "@types/react-dom": "^18.2.0",
+        "@vitejs/plugin-react": "^4.0.0",
+        typescript: "^5.0.0",
+        vite: "^4.0.0"
+      },
+      keywords: projectData.techStack,
+      author: "TechPath User",
+      license: "MIT"
+    }, null, 2)
   }
 
   // Logout user
@@ -308,33 +500,36 @@ venv/
       throw new Error('Not authenticated with GitHub')
     }
 
-    // Mock repositories for demo
-    return [
-      {
-        id: 1,
-        name: 'weather-dashboard',
-        full_name: 'techpath_user/weather-dashboard',
-        html_url: 'https://github.com/techpath_user/weather-dashboard',
-        description: 'A beautiful weather dashboard built with React',
-        private: false,
-        created_at: '2024-01-15T00:00:00Z',
-        updated_at: '2024-02-10T00:00:00Z',
-        stargazers_count: 5,
-        language: 'JavaScript'
-      },
-      {
-        id: 2,
-        name: 'task-manager',
-        full_name: 'techpath_user/task-manager',
-        html_url: 'https://github.com/techpath_user/task-manager',
-        description: 'Interactive task management application',
-        private: false,
-        created_at: '2024-02-01T00:00:00Z',
-        updated_at: '2024-02-15T00:00:00Z',
-        stargazers_count: 3,
-        language: 'TypeScript'
+    try {
+      const response = await fetch(`${this.proxyUrl}https://api.github.com/user/repos?sort=updated&per_page=10`, {
+        headers: {
+          'Authorization': `Bearer ${this.accessToken}`,
+          'Accept': 'application/vnd.github.v3+json',
+        },
+      })
+
+      if (!response.ok) {
+        throw new Error('Failed to fetch repositories')
       }
-    ]
+
+      const repos = await response.json()
+      
+      return repos.map((repo: any) => ({
+        id: repo.id,
+        name: repo.name,
+        full_name: repo.full_name,
+        html_url: repo.html_url,
+        description: repo.description,
+        private: repo.private,
+        created_at: repo.created_at,
+        updated_at: repo.updated_at,
+        stargazers_count: repo.stargazers_count,
+        language: repo.language
+      }))
+    } catch (error) {
+      console.error('Error fetching repositories:', error)
+      throw error
+    }
   }
 }
 

@@ -1,6 +1,6 @@
 import React from 'react'
 import { motion } from 'framer-motion'
-import { Github, LogOut, User } from 'lucide-react'
+import { Github, LogOut, User, AlertCircle } from 'lucide-react'
 import { useGitHub } from '../hooks/useGitHub'
 import toast from 'react-hot-toast'
 
@@ -15,10 +15,31 @@ const GitHubAuthButton = () => {
       try {
         await login()
         toast.success('🎉 Successfully connected to GitHub!')
-      } catch (error) {
-        toast.error('Failed to connect to GitHub. Please try again.')
+      } catch (error: any) {
+        console.error('GitHub auth error:', error)
+        
+        if (error.message.includes('Popup blocked')) {
+          toast.error('Please allow popups and try again')
+        } else if (error.message.includes('cancelled')) {
+          toast.error('GitHub authentication was cancelled')
+        } else {
+          toast.error('Failed to connect to GitHub. Please try again.')
+        }
       }
     }
+  }
+
+  // Check if GitHub credentials are configured
+  const isConfigured = import.meta.env.VITE_GITHUB_CLIENT_ID && 
+                      import.meta.env.VITE_GITHUB_CLIENT_ID !== 'your_github_client_id_here'
+
+  if (!isConfigured) {
+    return (
+      <div className="flex items-center space-x-2 bg-yellow-50 border border-yellow-200 rounded-2xl px-3 py-2">
+        <AlertCircle className="h-4 w-4 text-yellow-600" />
+        <span className="text-sm text-yellow-700">GitHub not configured</span>
+      </div>
+    )
   }
 
   if (isAuthenticated && user) {
